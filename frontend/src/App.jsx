@@ -65,46 +65,50 @@ function App() {
   // PREDICT
   // ============================================
 
-  const analyzeImage = async () => {
-    if (!selectedFile) {
-      setError("Please select an image first.");
-      return;
-    }
+ 
+const analyzeImage = async () => {
+  if (!selectedFile) {
+    setError("Please select an image first.");
+    return;
+  }
 
-    setLoading(true);
-    setResult(null);
-    setError("");
+  setLoading(true);
+  setResult(null);
+  setError("");
 
-    try {
-      const formData = new FormData();
+  try {
+    const formData = new FormData();
 
-      formData.append("file", selectedFile);
+    formData.append("file", selectedFile);
 
-      const response = await fetch(
-        "http://127.0.0.1:8000/predict",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Prediction request failed.");
+    const response = await fetch(
+      "https://pytorch-project-cat-dog-classifier.onrender.com/predict",
+      {
+        method: "POST",
+        body: formData,
       }
+    );
 
-      const data = await response.json();
-
-      setResult(data);
-    } catch (error) {
-      console.error(error);
-
-      setError(
-        "Could not connect to the AI server. Make sure FastAPI is running."
-      );
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error("Prediction request failed.");
     }
-  };
+
+    const data = await response.json();
+
+    setResult(data);
+
+  } catch (error) {
+    console.error(error);
+
+    setError(
+      "Could not connect to the AI server. Please try again."
+    );
+
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // ============================================
   // RESET
