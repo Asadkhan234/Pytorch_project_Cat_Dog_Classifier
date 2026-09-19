@@ -1,37 +1,22 @@
+
+import io
+import os
+
+import torch
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-
 from PIL import Image
 
-from io import BytesIO
-
-import sys
-from pathlib import Path
+from model.model import predict
 
 
 # ============================================================
-# FIND MODEL DIRECTORY
-# ============================================================
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
-MODEL_DIR = PROJECT_ROOT / "model"
-
-sys.path.append(str(MODEL_DIR))
-
-
-# Import our model
-
-from model import predict
-
-
-# ============================================================
-# CREATE FASTAPI APP
+# APP
 # ============================================================
 
 app = FastAPI(
     title="PetVision AI API",
-    description="Cat and Dog image classifier",
+    description="Cat and Dog image classifier powered by PyTorch",
     version="1.0.0"
 )
 
@@ -42,34 +27,37 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
-    ],
-
-    allow_credentials=True,
-
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
-
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 
 # ============================================================
-# HOME
+# ROOT
 # ============================================================
 
 @app.get("/")
-def home():
-
+def root():
     return {
         "message": "PetVision AI API is running"
     }
 
 
 # ============================================================
-# PREDICTION
+# HEALTH CHECK
+# ============================================================
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy"
+    }
+
+
+# ============================================================
+# PREDICT
 # ============================================================
 
 @app.post("/predict")
@@ -78,23 +66,14 @@ async def predict_image(
 ):
 
     # Read uploaded file
-
     contents = await file.read()
 
-
-    # Convert bytes to image
-
+    # Convert to PIL image
     image = Image.open(
-        BytesIO(contents)
+        io.BytesIO(contents)
     ).convert("RGB")
 
-
-    # Run model
-
-    result = predict(
-        image
-    )
-
+    # Run model prediction
+    result = predict(image)
 
     return result
-
